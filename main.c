@@ -1,188 +1,67 @@
-/*  primdrawG.c, by Schnappy, 12-2020
-    - Draw a gouraud shaded mesh exported as a TMESH by the blender <= 2.79b plugin io_export_psx_tmesh.py
-    based on primdraw.c by Lameguy64 (http://www.psxdev.net/forum/viewtopic.php?f=64&t=537)
-    2014 Meido-Tek Productions.
-    Controls:
-        Start                           - Toggle interactive/non-interactive mode.
-        Select                          - Reset object's position and angles.
-        L1/L2                           - Move object closer/farther.
-        L2/R2                           - Rotate object (XY).
-        Up/Down/Left/Right              - Rotate object (XZ/YZ).
-        Triangle/Cross/Square/Circle    - Move object up/down/left/right.
-*/
 #include <sys/types.h>
 #include <LIBGTE.H>
 #include <LIBGPU.H>
 #include <LIBETC.H>
 #include <stdio.h>
-// Sample vector model
 
-SVECTOR modelCube_mesh[] = {
-    { -150, 150, 100 },
-    { 150, 150, 100 },
-    { 150, 150, -100 },
-    { -150, 150, -100 },
-    { -150, -150, 100 },
-    { 150, -150, 100 },
-    { 150, -150, -100 },
-    { -150, -150, -100 }
+SVECTOR model_mesh[] = {
+    {64, 63, -64},
+    {64, -64, -64},
+    {-64, -63, -64},
+    {-63, 64, -64},
+    {64, 63, 64},
+    {63, -64, 64},
+    {-64, -63, 64},
+    {-63, 64, 64},
 };
 
-SVECTOR modelCube_normal[] = {
-    2048, -2048, -2048, 0,
-    -2048, -2048, -2048, 0,
-    -2048, -2048, 2048, 0,
-    2048, -2048, 2048, 0,
-    2048, 2048, -2048, 0,
-    -2048, 2048, -2048, 0,
-    -2048, 2048, 2048, 0,
-    2048, 2048, 2048, 0
+SVECTOR model_normals[] = {
+    {-63, 64, 64},
+    {-63, 64, 64},
+    {-63, 64, 64},
+    {-63, 64, 64},
+    {-63, 64, 64},
+    {-63, 64, 64},
+    {-63, 64, 64},
+    {-63, 64, 64},
 };
 
-CVECTOR modelCube_color[] = {
-    255, 64, 64, 0,   // ярко-красный
-    255, 128, 0, 0,   // оранжевый
-    255, 255, 0, 0,   // жёлтый
-    0, 255, 0, 0,     // зелёный
-    0, 255, 255, 0,   // бирюзовый
-    0, 128, 255, 0,   // голубой
-    64, 0, 255, 0,    // синий
-    255, 0, 255, 0,   // пурпурный
-    255, 64, 64, 0,   // и повторно для граней
-    255, 128, 0, 0,
-    255, 255, 0, 0,
-    0, 255, 0, 0,
-    0, 255, 255, 0,
-    0, 128, 255, 0,
-    64, 0, 255, 0,
-    255, 0, 255, 0,
-    255, 255, 255, 0, // белый
-    128, 128, 128, 0, // серый
-    255, 64, 64, 0,
-    255, 128, 0, 0,
-    255, 255, 0, 0,
-    0, 255, 0, 0,
-    0, 255, 255, 0,
-    0, 128, 255, 0,
-    64, 0, 255, 0,
-    255, 0, 255, 0,
-    255, 64, 64, 0,
-    255, 128, 0, 0,
-    255, 255, 0, 0,
-    0, 255, 0, 0,
-    0, 255, 255, 0,
-    0, 128, 255, 0,
-    64, 0, 255, 0,
-    255, 0, 255, 0,
-    255, 255, 255, 0
+int model_indices[] = {
+    0, 1, 2,
+    0, 2, 3,
+    4, 7, 6,
+    4, 6, 5,
+    0, 4, 5,
+    0, 5, 1,
+    1, 5, 6,
+    1, 6, 2,
+    2, 6, 7,
+    2, 7, 3,
+    4, 0, 3,
+    4, 3, 7,
 };
 
-
-int modelCube_index[] = {
-    0,2,3,
-    7,5,4,
-    4,1,0,
-    5,2,1,
-    2,7,3,
-    0,7,4,
-    0,1,2,
-    7,6,5,
-    4,5,1,
-    5,6,2,
-    2,6,7,
-    0,3,7
+CVECTOR model_colors[] = {
+    138, 17, 92, 0,
+    138, 17, 92, 0,
+    254, 26, 105, 0,
+    254, 26, 105, 0,
+    0, 78, 115, 0,
+    0, 78, 115, 0,
+    159, 172, 58, 0,
+    159, 172, 58, 0,
+    77, 59, 156, 0,
+    77, 59, 156, 0,
+    27, 34, 182, 0,
+    27, 34, 182, 0,
 };
 
-TMESH modelCube = {
-    modelCube_mesh,
-    modelCube_normal,
+TMESH model = {
+    model_mesh,
+    model_normals,
     0,
-    modelCube_color,
-    12
-};
-
-SVECTOR modelCube1_mesh[] = {
-    { -128,128,128 },
-    { 128,128,128 },
-    { 128,128,-128 },
-    { -128,128,-128 },
-    { -128,-128,128 },
-    { 128,-128,128 },
-    { 128,-128,-128 },
-    { -128,-128,-128 }
-};
-
-SVECTOR modelCube1_normal[] = {
-    2365,-2365,-2365, 0,
-    -2365,-2365,-2365, 0,
-    -2365,-2365,2365, 0,
-    2365,-2365,2365, 0,
-    2365,2365,-2365, 0,
-    -2365,2365,-2365, 0,
-    -2365,2365,2365, 0,
-    2365,2365,2365, 0
-};
-
-CVECTOR modelCube1_color[] = {
-    255,237,0, 0,
-    255,235,0, 0,
-    255,236,0, 0,
-    255,2,0, 0,
-    254,3,0, 0,
-    255,8,0, 0,
-    229,0,255, 0,
-    229,0,255, 0,
-    229,0,255, 0,
-    5,16,250, 0,
-    0,12,255, 0,
-    0,12,255, 0,
-    4,251,25, 0,
-    0,255,26, 0,
-    0,255,26, 0,
-    0,248,255, 0,
-    0,248,255, 0,
-    0,248,255, 0,
-    255,237,0, 0,
-    255,237,0, 0,
-    255,235,0, 0,
-    255,2,0, 0,
-    255,6,2, 0,
-    254,3,0, 0,
-    229,0,255, 0,
-    232,21,232, 0,
-    229,0,255, 0,
-    5,16,250, 0,
-    2,13,253, 0,
-    0,12,255, 0,
-    4,251,25, 0,
-    0,255,26, 0,
-    0,255,26, 0,
-    0,248,255, 0,
-    0,248,255, 0,
-    0,248,255, 0
-};
-
-int modelCube1_index[] = {
-    0,2,3,
-    7,5,4,
-    4,1,0,
-    5,2,1,
-    2,7,3,
-    0,7,4,
-    0,1,2,
-    7,6,5,
-    4,5,1,
-    5,6,2,
-    2,6,7,
-    0,3,7
-};
-
-TMESH modelCube1 = {
-    modelCube1_mesh,
-    modelCube1_normal,
-    0,
-    modelCube1_color,
-    12
+    model_colors,
+    6
 };
 
 #define VMODE       0
@@ -307,17 +186,17 @@ int main() {
         // Render the sample vector model
         t=0;
         // modelCube is a TMESH, len member == # vertices, but here it's # of triangle... So, for each tri * 3 vertices ...
-        for (i = 0; i < (modelCube.len*3); i += 3) {               
+        for (i = 0; i < (model.len*3); i += 3) {               
             poly = (POLY_G3 *)nextpri;
             // Initialize the primitive and set its color values
             SetPolyG3(poly);
-            setRGB0(poly, modelCube.c[i].r , modelCube.c[i].g   , modelCube.c[i].b);
-            setRGB1(poly, modelCube.c[i+2].r, modelCube.c[i+2].g, modelCube.c[i+2].b);
-            setRGB2(poly, modelCube.c[i+1].r, modelCube.c[i+1].g, modelCube.c[i+1].b);
+            setRGB0(poly, model.c[i].r , model.c[i].g   , model.c[i].b);
+            setRGB1(poly, model.c[i+2].r, model.c[i+2].g, model.c[i+2].b);
+            setRGB2(poly, model.c[i+1].r, model.c[i+1].g, model.c[i+1].b);
             // Rotate, translate, and project the vectors and output the results into a primitive
-            OTz  = RotTransPers(&modelCube_mesh[modelCube_index[t]]  , (long*)&poly->x0, &p, &Flag);
-            OTz += RotTransPers(&modelCube_mesh[modelCube_index[t+2]], (long*)&poly->x1, &p, &Flag);
-            OTz += RotTransPers(&modelCube_mesh[modelCube_index[t+1]], (long*)&poly->x2, &p, &Flag);
+            OTz  = RotTransPers(&model_mesh[model_indices[t]]  , (long*)&poly->x0, &p, &Flag);
+            OTz += RotTransPers(&model_mesh[model_indices[t+2]], (long*)&poly->x1, &p, &Flag);
+            OTz += RotTransPers(&model_mesh[model_indices[t+1]], (long*)&poly->x2, &p, &Flag);
             // Sort the primitive into the OT
             OTz /= 3;
             if ((OTz > 0) && (OTz < OTLEN))

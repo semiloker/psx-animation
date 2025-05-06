@@ -1,5 +1,6 @@
 {
     "files.associations": {
-        "MAIN.C": "cpp"
+        "MAIN.C": "cpp",
+        "random": "cpp"
     }
 }
