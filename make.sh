@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# dos2unix make.sh (for ubuntu lts)
+
 # === win cfg ===
 WIN_PROJECT_PATH="C:\\Users\\smlkr\\Desktop\\psx-animation"
 WSL_PROJECT_PATH="/mnt/c/Users/smlkr/Desktop/psx-animation"
